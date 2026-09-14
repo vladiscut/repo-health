@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Repo Health{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'health/app.css' %}">
+</head>
+<body>
+    <header class="top">
+        <a class="brand" href="{% url 'repo-list' %}">Repo Health</a>
+        <span class="muted">SourceCraft · NextDev</span>
+    </header>
+    <main class="wrap">
+        {% if messages %}
+            <ul class="flash">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{% extends "health/base.html" %}
+{% block title %}Репозитории · Repo Health{% endblock %}
+{% block content %}
+<h1>Открытые репозитории</h1>
+<p class="lead">Оценка 0–100 по сигналам SourceCraft. Наведите на балл, чтобы увидеть разбивку.</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Репозиторий</th>
+            <th>Язык</th>
+            <th>Лайки</th>
+            <th>Проверка</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in items %}
+        <tr>
+            <td>
+                <a href="{% url 'repo-detail' item.repo.org_slug item.repo.repo_slug %}">
+                    {{ item.repo.org_slug }}/{{ item.repo.repo_slug }}
+                </a>
+                <div class="muted">{{ item.repo.description }}</div>
+            </td>
+            <td>{{ item.repo.language|default:"—" }}</td>
+            <td>{{ item.repo.stars }}</td>
+            <td class="muted">{{ item.repo.last_scanned_at|date:"d.m.Y H:i"|default:"нет" }}</td>
+            <td>
+                {% if item.score %}
+                <span class="score {{ item.score.level }}" tabindex="0">
+                    {{ item.score.total }}
+                    <span class="tip">
+                        Activity {{ item.score.activity }} · Community {{ item.score.community }}<br>
+                        Maintenance {{ item.score.maintenance }} · Docs {{ item.score.documentation }}<br>
+                        Security {{ item.score.security }}
+                    </span>
+                </span>
+                {% else %}
+                <span class="muted">нет данных</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5">Репозиториев пока нет. Запустите <code>python manage.py seed_demo</code>.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

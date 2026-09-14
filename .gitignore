@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+staticfiles/
+.python-version
+.ruff_cache/
+*.log
+celerybeat-schedule
+celerybeat-schedule.*
