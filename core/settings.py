@@ -104,3 +104,5 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.BrowsableAPIRenderer",
     ]
 }
+
+SOURCECRAFT_API_TOKEN=env("SOURCECRAFT_API_TOKEN")
