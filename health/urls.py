@@ -1,6 +1,8 @@
 from django.urls import path
 
-from . import views
+from health import views
+
+app_name = 'health'
 
 urlpatterns = [
     path("", views.repo_list, name="repo-list"),

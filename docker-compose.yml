@@ -1,8 +1,8 @@
 services:
-  web-repo-health-python:
-    container_name: web-repo-health-python
-    hostname: web-repo-health-python
-    restart: unless-stopped
+  web-repo-health:
+    container_name: web-repo-health
+    hostname: web-repo-health
+    restart: always
     build:
       context: .
     env_file:
@@ -11,21 +11,25 @@ services:
       sh -c "python manage.py migrate --noinput &&
              python manage.py seed_demo &&
              python manage.py collectstatic --noinput &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:$WEB_PORT"
     volumes:
       - .:/code
     ports:
-      - "127.0.0.1:${WEB_PORT}:8000"
+      - "127.0.0.1:$WEB_PORT:$WEB_PORT"
     depends_on:
-      db-repo-health-postgres:
+      postgres-repo-health:
         condition: service_healthy
       redis-repo-health:
         condition: service_healthy
+    networks:
+      repo-health-network:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
-  db-repo-health-postgres:
-    container_name: db-repo-health-postgres
-    hostname: db-repo-health-postgres
-    restart: unless-stopped
+  postgres-repo-health:
+    container_name: postgres-repo-health
+    hostname: postgres-repo-health
+    restart: always
     image: postgres:16-alpine
     env_file:
       - .env
@@ -44,13 +48,15 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+    networks:
+      repo-health-network:
 
   redis-repo-health:
     container_name: redis-repo-health
     hostname: redis-repo-health
-    restart: unless-stopped
+    restart: always
     image: redis:7-alpine
-    command: redis-server --port ${REDIS_PORT}
+    command: --port ${REDIS_PORT}
     ports:
       - "127.0.0.1:${REDIS_PORT}:${REDIS_PORT}"
     healthcheck:
@@ -58,24 +64,32 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+    networks:
+      repo-health-network:
 
   celery-repo-health:
     container_name: celery-repo-health
-    restart: unless-stopped
+    restart: always
     build:
       context: .
     env_file:
       - .env
-    command: celery --app=config worker -B -l info
+    command: celery -A core worker -B -l info -c 4 -Q analysis.user,analysis.scheduled,celery --schedule=/tmp/celerybeat-schedule
     volumes:
       - .:/code
     depends_on:
-      db-repo-health-postgres:
+      postgres-repo-health:
         condition: service_healthy
       redis-repo-health:
         condition: service_healthy
-      web-repo-health-python:
+      web-repo-health:
         condition: service_started
+    networks:
+      repo-health-network:
+
 
 volumes:
   postgres-repo-health-volume:
+
+networks:
+  repo-health-network:

@@ -18,7 +18,7 @@
         {% for item in items %}
         <tr>
             <td>
-                <a href="{% url 'repo-detail' item.repo.org_slug item.repo.repo_slug %}">
+                <a href="{% url 'health:repo-detail' item.repo.org_slug item.repo.repo_slug %}">
                     {{ item.repo.org_slug }}/{{ item.repo.repo_slug }}
                 </a>
                 <div class="muted">{{ item.repo.description }}</div>

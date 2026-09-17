@@ -7,12 +7,12 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
-DEBUG = env.bool("DEBUG", default=True)
-STAGE = env.bool("STAGE", default=False)
+DEBUG = env.bool("DEBUG")
+STAGE = env.bool("STAGE")
 SECRET_KEY = env("SECRET_KEY")
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
-CSRF_TRUSTED_ORIGINS = env.list("TRUSTED_ORIGINS", default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = env.list("TRUSTED_ORIGINS")
 
 DATABASES = {
     "default": {
@@ -20,7 +20,7 @@ DATABASES = {
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
-        "HOST": env("POSTGRES_CONTAINER", default="localhost"),
+        "HOST": env("POSTGRES_CONTAINER"),
         "PORT": env("POSTGRES_PORT"),
     }
 }
@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "core",
     "health",
 ]
 
@@ -49,7 +50,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "config.urls"
+ROOT_URLCONF = "core.urls"
 
 TEMPLATES = [
     {
@@ -66,7 +67,7 @@ TEMPLATES = [
     }
 ]
 
-WSGI_APPLICATION = "config.wsgi.application"
+WSGI_APPLICATION = "core.wsgi.application"
 
 LANGUAGE_CODE = "ru-ru"
 TIME_ZONE = "Europe/Moscow"
@@ -85,12 +86,9 @@ STORAGES = {
     },
 }
 
-REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")
+REDIS_URL = env("REDIS_URL")
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 60 * 10
-CELERY_TIMEZONE = TIME_ZONE
 
 CACHES = {
     "default": {

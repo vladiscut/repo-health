@@ -1,7 +1,7 @@
 {% extends "health/base.html" %}
 {% block title %}{{ repo.org_slug }}/{{ repo.repo_slug }} · Repo Health{% endblock %}
 {% block content %}
-<p class="crumb"><a href="{% url 'repo-list' %}">← К списку</a></p>
+<p class="crumb"><a href="{% url 'health:repo-list' %}">← К списку</a></p>
 <div class="hero">
     <div>
         <h1>{{ repo.org_slug }}/{{ repo.repo_slug }}</h1>
@@ -16,7 +16,7 @@
     {% endif %}
 </div>
 
-<form method="post" action="{% url 'repo-rescan' repo.org_slug repo.repo_slug %}" class="toolbar" onsubmit="this.querySelector('button').classList.add('busy')">
+<form method="post" action="{% url 'health:repo-rescan' repo.org_slug repo.repo_slug %}" class="toolbar" onsubmit="this.querySelector('button').classList.add('busy')">
     {% csrf_token %}
     <button type="submit">Обновить сейчас</button>
     <span class="loader" aria-hidden="true"></span>

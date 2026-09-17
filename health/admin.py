@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Finding, HealthScore, Repository, Scan
+from health.models import Finding, HealthScore, Repository, Scan, MetricSample
 
 
 class FindingInline(admin.TabularInline):
@@ -24,3 +24,8 @@ class ScanAdmin(admin.ModelAdmin):
     list_display = ("repository", "status", "created_at", "finished_at")
     list_filter = ("status",)
     inlines = [HealthScoreInline, FindingInline]
+
+
+@admin.register(MetricSample)
+class MetricSampleAdmin(admin.ModelAdmin):
+    pass
