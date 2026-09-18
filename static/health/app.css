@@ -68,9 +68,17 @@ h2 { margin: 32px 0 12px; font-size: 18px; }
 .score.mid { color: var(--warn); }
 .score.low { color: var(--bad); }
 
-.hero, .toolbar { display: flex; gap: 24px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.hero, .toolbar { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
 .hero { margin-bottom: 16px; }
-.toolbar { margin: 16px 0 8px; }
+.toolbar { margin: 16px 0 16px; }
+.toolbar input, .toolbar select {
+    background: #151922;
+    color: var(--text);
+    border: 1px solid var(--line);
+    padding: 10px 12px;
+    min-width: 180px;
+}
+.pager { display: flex; gap: 16px; align-items: center; margin-top: 20px; }
 button {
     background: var(--accent);
     color: #0b1220;

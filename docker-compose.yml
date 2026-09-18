@@ -71,6 +71,8 @@ services:
     container_name: celery-repo-health
     restart: always
     image: web-repo-health:latest
+    build:
+      context: .
     env_file:
       - .env
     command: celery -A core worker -l info -c 4 -Q analysis.user,analysis.scheduled,celery
@@ -90,6 +92,8 @@ services:
     container_name: celery-repo-beat-health
     restart: always
     image: web-repo-health:latest
+    build:
+      context: .
     env_file:
       - .env
     command: celery -A core beat -l info --schedule=/tmp/celerybeat-schedule --pidfile=

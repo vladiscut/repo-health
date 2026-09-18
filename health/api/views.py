@@ -5,6 +5,8 @@ from health.models import Repository
 
 
 class RepositoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.filter(
+        visibility=Repository.VisibilityType.PUBLIC,
+    ).order_by("-stars")
     serializer_class = RepositorySerializer
     lookup_field = "repo_slug"

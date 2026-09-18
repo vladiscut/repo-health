@@ -2,7 +2,20 @@
 {% block title %}Репозитории · Repo Health{% endblock %}
 {% block content %}
 <h1>Открытые репозитории</h1>
-<p class="lead">Оценка 0–100 по сигналам SourceCraft. Наведите на балл, чтобы увидеть разбивку.</p>
+<p class="lead">
+    {{ total_count }} публичных репозиториев SourceCraft.
+    Score появится после скана; сейчас в каталоге лайки и метаданные.
+</p>
+
+<form method="get" class="toolbar">
+    <input type="search" name="q" value="{{ query }}" placeholder="org, репо, язык" aria-label="Поиск">
+    <select name="sort" aria-label="Сортировка">
+        <option value="stars" {% if sort == "stars" %}selected{% endif %}>По лайкам</option>
+        <option value="updated" {% if sort == "updated" %}selected{% endif %}>По активности</option>
+        <option value="name" {% if sort == "name" %}selected{% endif %}>По имени</option>
+    </select>
+    <button type="submit">Показать</button>
+</form>
 
 <table class="table">
     <thead>
@@ -21,7 +34,7 @@
                 <a href="{% url 'health:repo-detail' item.repo.org_slug item.repo.repo_slug %}">
                     {{ item.repo.org_slug }}/{{ item.repo.repo_slug }}
                 </a>
-                <div class="muted">{{ item.repo.description }}</div>
+                <div class="muted">{{ item.repo.description|default:""|truncatechars:140 }}</div>
             </td>
             <td>{{ item.repo.language|default:"—" }}</td>
             <td>{{ item.repo.stars }}</td>
@@ -31,9 +44,9 @@
                 <span class="score {{ item.score.level }}" tabindex="0">
                     {{ item.score.total }}
                     <span class="tip">
-                        Activity {{ item.score.activity }} · Community {{ item.score.community }}<br>
-                        Maintenance {{ item.score.maintenance }} · Docs {{ item.score.documentation }}<br>
-                        Security {{ item.score.security }}
+                        {% for name, value in item.score.categories %}
+                        {{ name }} {{ value }}{% if not forloop.last %} · {% endif %}
+                        {% endfor %}
                     </span>
                 </span>
                 {% else %}
@@ -42,8 +55,20 @@
             </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5">Репозиториев пока нет. Запустите <code>python manage.py seed_demo</code>.</td></tr>
+        <tr><td colspan="5">Ничего не найдено. Подождите синхронизацию каталога или смените запрос.</td></tr>
         {% endfor %}
     </tbody>
 </table>
+
+{% if page.paginator.num_pages > 1 %}
+<nav class="pager" aria-label="Страницы">
+    {% if page.has_previous %}
+    <a href="?q={{ query|urlencode }}&amp;sort={{ sort }}&amp;page={{ page.previous_page_number }}">Назад</a>
+    {% endif %}
+    <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+    <a href="?q={{ query|urlencode }}&amp;sort={{ sort }}&amp;page={{ page.next_page_number }}">Вперёд</a>
+    {% endif %}
+</nav>
+{% endif %}
 {% endblock %}

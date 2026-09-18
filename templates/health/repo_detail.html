@@ -6,12 +6,23 @@
     <div>
         <h1>{{ repo.org_slug }}/{{ repo.repo_slug }}</h1>
         <p class="lead">{{ repo.description }}</p>
-        <p class="muted">{{ repo.language }} · {{ repo.stars }} лайков · {{ repo.forks }} форков</p>
+        <p class="muted">
+            {{ repo.language|default:"язык не указан" }}
+            · {{ repo.stars }} лайков
+            · {{ repo.forks }} форков
+            {% if repo.url %}
+            · <a href="{{ repo.url }}">SourceCraft</a>
+            {% endif %}
+        </p>
     </div>
     {% if score %}
     <div class="hero-score">
         <div class="score big {{ score.level }}">{{ score.total }}</div>
         <div class="muted">Repo Health Score</div>
+    </div>
+    {% else %}
+    <div class="hero-score">
+        <div class="muted">Score пока нет — скан метрик не подключён</div>
     </div>
     {% endif %}
 </div>
@@ -51,7 +62,7 @@
         {% endfor %}
     </ul>
     {% else %}
-    <p class="muted">Критических находок нет.</p>
+    <p class="muted">Находок нет — либо скан ещё не считал Score, либо проблем не найдено.</p>
     {% endif %}
 </section>
 
@@ -60,7 +71,11 @@
     <h2>История проверок</h2>
     <ol class="history">
         {% for item in history %}
-        <li>{{ item.finished_at|date:"d.m.Y H:i" }} — {{ item.score.total }}</li>
+        <li>
+            {{ item.finished_at|date:"d.m.Y H:i"|default:"—" }}
+            —
+            {% if item.total is not None %}{{ item.total }}{% else %}нет данных{% endif %}
+        </li>
         {% endfor %}
     </ol>
 </section>

@@ -16,7 +16,7 @@ class HealthScoreInline(admin.StackedInline):
 @admin.register(Repository)
 class RepositoryAdmin(admin.ModelAdmin):
     list_display = ("org_slug", "repo_slug", "language", "stars", "last_scanned_at")
-    search_fields = ("org_slug", "repo_slug", "name")
+    search_fields = ("org_slug", "repo_slug")
 
 
 @admin.register(Scan)

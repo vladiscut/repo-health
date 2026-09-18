@@ -27,6 +27,6 @@ def task_update_all_public_repos(page_token: str | None = None):
 
 
 @app.task
-def task_scan_repository():
-    # TODO
-    pass
+def task_scan_repository(repository_id: int | None = None):
+    # Сбор метрик ещё не подключён. Сигнатура нужна, чтобы rescan с карточки не падал.
+    return repository_id

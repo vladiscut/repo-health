@@ -102,8 +102,13 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
-    ]
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 50,
 }
 
-SOURCECRAFT_API_BASE_URL=env("SOURCECRAFT_API_BASE_URL")
-SOURCECRAFT_API_TOKEN=env("SOURCECRAFT_API_TOKEN")
+SOURCECRAFT_API_BASE_URL = env(
+    "SOURCECRAFT_API_BASE_URL",
+    default="https://api.sourcecraft.tech",
+)
+SOURCECRAFT_API_TOKEN = env("SOURCECRAFT_API_TOKEN", default="")

@@ -14,14 +14,23 @@
 from health.models import Finding, MetricSample
 
 
-# Веса категорий. Сумма равна 1.0.
+# Веса из ТЗ §3.2 (ориентир). Сумма равна 1.0.
 CATEGORY_WEIGHTS = {
-    MetricSample.Category.DOCS: 0.15,
-    MetricSample.Category.CI_CD: 0.25,
     MetricSample.Category.SECURITY: 0.20,
-    MetricSample.Category.ACTIVITY: 0.25,
-    MetricSample.Category.ISSUES: 0.10,
-    MetricSample.Category.CODE_HEALTH: 0.05,
+    MetricSample.Category.CODE_HEALTH: 0.20,
+    MetricSample.Category.ACTIVITY: 0.15,
+    MetricSample.Category.DOCS: 0.15,
+    MetricSample.Category.CI_CD: 0.15,
+    MetricSample.Category.ISSUES: 0.15,
+}
+
+CATEGORY_LABELS = {
+    MetricSample.Category.DOCS: "Документация",
+    MetricSample.Category.CI_CD: "CI/CD",
+    MetricSample.Category.SECURITY: "Security",
+    MetricSample.Category.ACTIVITY: "Активность",
+    MetricSample.Category.ISSUES: "Issues",
+    MetricSample.Category.CODE_HEALTH: "Code health",
 }
 
 
@@ -187,3 +196,44 @@ def score_from_raw(raw: dict) -> tuple[dict, list[dict]]:
 
     findings = _build_findings(raw)
     return scores, findings
+
+
+def overall_from_category_totals(totals: dict[str, int | None]) -> int | None:
+    """Взвешенная сумма доступных категорий. None, если считать нечего."""
+    used = 0.0
+    acc = 0.0
+    for category, weight in CATEGORY_WEIGHTS.items():
+        value = totals.get(category)
+        if value is None:
+            continue
+        acc += value * weight
+        used += weight
+    if used == 0:
+        return None
+    return round(acc / used)
+
+
+def score_level(total: int | None) -> str:
+    if total is None:
+        return ""
+    if total >= 80:
+        return "ok"
+    if total >= 50:
+        return "mid"
+    return "low"
+
+
+def present_scores(totals: dict[str, int | None]) -> dict:
+    """Данные для шаблона: итог, уровень, подписи категорий."""
+    total = overall_from_category_totals(totals)
+    categories = [
+        (CATEGORY_LABELS.get(key, key), value)
+        for key, value in totals.items()
+        if value is not None
+    ]
+    return {
+        "total": total,
+        "level": score_level(total),
+        "categories": categories,
+        "totals": totals,
+    }

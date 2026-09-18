@@ -135,7 +135,11 @@ class Repository(models.Model):
         return f"{self.org_slug}/{self.repo_slug}"
 
     def latest_scan(self):
-        return self.scans.all().first()
+        return (
+            self.scans
+            .filter(status__in=[Scan.Status.SUCCESS, Scan.Status.PARTIAL])
+            .first()
+        )
 
 
 class Scan(models.Model):
