@@ -67,15 +67,14 @@ def prepare_repositories_data(payload: list) -> list:
     )
 
 
-def update_all_public_repositories() -> None:
-    """Создаёт или обновляет объекты `Repository`"""
+def _flush_repositories(buffer: list[Repository]) -> None:
+    """Сбрасывает накопленные объекты в БД и очищает буфер"""
 
-    client = SourceCraftClient()
-    repos = client.list_public_repositories()
-    prepared = prepare_repositories_data(repos)
-    repos = [Repository(**item) for item in prepared]
+    if not buffer:
+        return
+
     Repository.objects.bulk_create(
-        repos,
+        buffer,
         update_conflicts=True,
         unique_fields=["sourcecraft_id"],
         update_fields=[
@@ -94,3 +93,42 @@ def update_all_public_repositories() -> None:
         ],
         batch_size=500,
     )
+    buffer.clear()
+
+
+def update_all_public_repositories(
+    start_page_token: str | None = None,
+) -> str | None:
+    """Создаёт или обновляет объекты `Repository` пачками страниц
+
+    Не собирает все страницы в память: накапливает до `pages_per_batch`
+    страниц, сбрасывает их в БД и продолжает со следующей страницы
+
+    Возвращает `next_page_token`
+    """
+
+    client = SourceCraftClient()
+    buffer: list[Repository] = []
+    # Сколько страниц API накапливать перед сбросом в БД
+    pages_per_batch = 20  # т.е. pages_per_batch * 100 репозиториев за раз
+    # Сколько страниц в пачке
+    pages_in_batch = 0
+
+    try:
+        for items, next_token in client.iter_public_repositories(
+            start_page_token=start_page_token,
+        ):
+            for item in items:
+                data = prepare_repository_data(item)
+                if data:
+                    buffer.append(Repository(**data))
+
+            pages_in_batch += 1
+            if pages_in_batch >= pages_per_batch:
+                _flush_repositories(buffer)
+                return next_token
+
+        _flush_repositories(buffer)
+        return None
+    finally:
+        client.close()

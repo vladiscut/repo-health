@@ -64,7 +64,7 @@ class Repository(models.Model):
     )
     repo_slug = models.CharField(
         "репозиторий",
-        max_length=255,
+        max_length=500,
     )
     description = models.TextField(
         "описание",
@@ -90,7 +90,7 @@ class Repository(models.Model):
         unique=True,
     )
     url = models.URLField(
-        max_length=255,
+        max_length=500,
     )
     logo_url = models.URLField(
         max_length=255,

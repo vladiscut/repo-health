@@ -15,7 +15,6 @@ from urllib3.util.retry import Retry
 
 DEFAULT_TIMEOUT = 15.0
 DEFAULT_PAGE_SIZE = 100
-MAX_PAGES = 100
 
 # Коды ответов, при которых имеет смысл повторять запрос.
 RETRY_STATUS_CODES = (429, 500, 502, 503, 504)
@@ -131,30 +130,96 @@ class SourceCraftClient:
         except ValueError as exc:
             raise SourceCraftError(f"Некорректный JSON в ответе {url}") from exc
 
+    def _fetch_page(
+        self,
+        path: str,
+        collection_key: str,
+        params: dict[str, Any] | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+        page_token: str | None = None,
+    ) -> tuple[list[dict[str, Any]], str | None]:
+        """Загружает одну страницу и возвращает (items, next_page_token)"""
+
+        query = dict(params or {})
+        query["page_size"] = page_size
+        if page_token:
+            query["page_token"] = page_token
+
+        data = self._request("GET", path, params=query) or {}
+        items = data.get(collection_key) or []
+        return items, data.get("next_page_token")
+
+    def _iter_pages(
+        self,
+        path: str,
+        collection_key: str,
+        params: dict[str, Any] | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+        start_page_token: str | None = None,
+    ) -> Iterator[tuple[list[dict[str, Any]], str | None]]:
+        """Итерирует страницы, отдавая (items, next_page_token).
+
+        Внутренний метод: инкапсулирует знание о `path` и `collection_key`.
+        Позволяет обрабатывать данные потоково и сохранять курсор
+        (`next_page_token`) между батчами, не накапливая все страницы в памяти.
+        """
+
+        page_token = start_page_token
+        while True:
+            items, page_token = self._fetch_page(
+                path,
+                collection_key=collection_key,
+                params=params,
+                page_size=page_size,
+                page_token=page_token,
+            )
+            yield items, page_token
+            if not page_token:
+                return
+
+    def iter_public_repositories(
+        self,
+        filter_query: str | None = None,
+        sort_by: str | None = None,
+        page_size: int = DEFAULT_PAGE_SIZE,
+        start_page_token: str | None = None,
+    ) -> Iterator[tuple[list[dict[str, Any]], str | None]]:
+        """Итерирует страницы публичных репозиториев батчами.
+
+        Отдаёт `(items, next_page_token)` для каждой страницы, чтобы вызывающий
+        код сам решал, когда сбрасывать накопленные данные в БД, и мог сохранять
+        курсор между батчами.
+        """
+
+        params: dict[str, Any] = {}
+        if filter_query:
+            params["filter"] = filter_query
+        if sort_by:
+            params["sort_by"] = sort_by
+        return self._iter_pages(
+            "/repos",
+            collection_key="repositories",
+            params=params,
+            page_size=page_size,
+            start_page_token=start_page_token,
+        )
+
     def _paginate(
         self,
         path: str,
         collection_key: str,
         params: dict[str, Any] | None = None,
         page_size: int = DEFAULT_PAGE_SIZE,
-        max_pages: int = MAX_PAGES,
     ) -> Iterator[dict[str, Any]]:
-        """Итерирует элементы пагинации"""
+        """Итерирует элементы пагинации, пока API возвращает next_page_token"""
 
-        page_token: str | None = None
-        for _ in range(max_pages):
-            query = dict(params or {})
-            query["page_size"] = page_size
-            if page_token:
-                query["page_token"] = page_token
-
-            data = self._request("GET", path, params=query) or {}
-            items = data.get(collection_key) or []
+        for items, _ in self._iter_pages(
+            path,
+            collection_key=collection_key,
+            params=params,
+            page_size=page_size,
+        ):
             yield from items
-
-            page_token = data.get("next_page_token")
-            if not page_token:
-                return
 
     def list_public_repositories(
         self,
