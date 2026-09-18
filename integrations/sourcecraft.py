@@ -4,7 +4,6 @@
 Спецификация: `https://api.sourcecraft.tech/sourcecraft.swagger.json`
 """
 
-import logging
 from typing import Any, Iterator
 
 from django.conf import settings
@@ -14,10 +13,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-logger = logging.getLogger(__name__)
-
 DEFAULT_TIMEOUT = 15.0
-DEFAULT_PAGE_SIZE = 200
+DEFAULT_PAGE_SIZE = 100
 MAX_PAGES = 100
 
 # Коды ответов, при которых имеет смысл повторять запрос.
@@ -33,6 +30,8 @@ class SourceCraftError(RuntimeError):
         status_code: int | None = None,
         payload: Any | None = None
     ) -> None:
+        error_txt = payload.get('message', '')
+        message += f'\n{error_txt})'
         super().__init__(message)
         self.status_code = status_code
         self.payload = payload
@@ -43,11 +42,14 @@ class SourceCraftClient:
 
     def __init__(
         self,
+        token: str | None = None,
         timeout: float = DEFAULT_TIMEOUT,
         retries: int = 3,
         session: requests.Session | None = None,
     ) -> None:
-        self.access_token = settings.SOURCECRAFT_API_TOKEN
+        if not token:
+            token = settings.SOURCECRAFT_API_TOKEN
+        self.access_token = token
         self.base_url = settings.SOURCECRAFT_API_BASE_URL.rstrip("/")
         self.timeout = timeout
         self.session = session or self._build_session(retries)
@@ -168,7 +170,9 @@ class SourceCraftClient:
             params["sort_by"] = sort_by
         return list(
             self._paginate(
-                "/repos", collection_key="repositories", params=params
+                "/repos",
+                collection_key="repositories",
+                params=params,
             )
         )
 

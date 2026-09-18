@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from health.models import Repository, Scan
-from health.tasks import scan_repository
+from health.tasks import task_scan_repository
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +66,6 @@ def repo_detail(request, org_slug: str, repo_slug: str):
 @require_POST
 def repo_rescan(request, org_slug: str, repo_slug: str):
     repo = get_object_or_404(Repository, org_slug=org_slug, repo_slug=repo_slug)
-
-    # Брокер Celery может быть недоступен (например, в локальной среде).
-    # В этом случае выполняем анализ синхронно, чтобы не отдавать 500.
-    try:
-        scan_repository.delay(repo.id)
-        messages.info(request, "Проверка поставлена в очередь.")
-    except Exception as exc:  # noqa: BLE001 - ловим любой сбой брокера
-        logger.warning(
-            "Celery broker unavailable (%s), running scan synchronously", exc
-        )
-        scan_repository.apply(args=[repo.id])
-        messages.success(request, "Проверка выполнена.")
-
+    task_scan_repository.delay(repo.id)
+    messages.info(request, "Проверка поставлена в очередь.")
     return redirect("health:repo-detail", org_slug=org_slug, repo_slug=repo_slug)

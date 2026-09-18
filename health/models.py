@@ -60,11 +60,11 @@ class Repository(models.Model):
 
     org_slug = models.CharField(
         "организация",
-        max_length=128,
+        max_length=255,
     )
     repo_slug = models.CharField(
         "репозиторий",
-        max_length=128,
+        max_length=255,
     )
     description = models.TextField(
         "описание",
@@ -74,6 +74,7 @@ class Repository(models.Model):
         "язык",
         max_length=64,
         blank=True,
+        null=True,
     )
     stars = models.PositiveIntegerField(
         "лайки",
@@ -88,12 +89,21 @@ class Repository(models.Model):
         max_length=255,
         unique=True,
     )
-    url = models.URLField()
-    logo_url = models.URLField()
+    url = models.URLField(
+        max_length=255,
+    )
+    logo_url = models.URLField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     is_empty = models.BooleanField(
         default=False
     )
-    last_updated = models.DateTimeField()
+    last_updated = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
     visibility = models.CharField(
         max_length=10,
         choices=VisibilityType.choices,
@@ -119,7 +129,6 @@ class Repository(models.Model):
     class Meta:
         verbose_name = "репозиторий"
         verbose_name_plural = "репозитории"
-        unique_together = ("org_slug", "repo_slug")
         ordering = ["org_slug", "repo_slug"]
 
     def __str__(self):
