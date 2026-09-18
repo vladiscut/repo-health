@@ -3,6 +3,7 @@ services:
     container_name: web-repo-health
     hostname: web-repo-health
     restart: always
+    image: web-repo-health:latest
     build:
       context: .
     env_file:
@@ -69,11 +70,29 @@ services:
   celery-repo-health:
     container_name: celery-repo-health
     restart: always
-    build:
-      context: .
+    image: web-repo-health:latest
     env_file:
       - .env
-    command: celery -A core worker -B -l info -c 4 -Q analysis.user,analysis.scheduled,celery --schedule=/tmp/celerybeat-schedule
+    command: celery -A core worker -l info -c 4 -Q analysis.user,analysis.scheduled,celery
+    volumes:
+      - .:/code
+    depends_on:
+      postgres-repo-health:
+        condition: service_healthy
+      redis-repo-health:
+        condition: service_healthy
+      web-repo-health:
+        condition: service_started
+    networks:
+      repo-health-network:
+
+  celery-beat-repo-health:
+    container_name: celery-repo-beat-health
+    restart: always
+    image: web-repo-health:latest
+    env_file:
+      - .env
+    command: celery -A core beat -l info --schedule=/tmp/celerybeat-schedule --pidfile=
     volumes:
       - .:/code
     depends_on:
